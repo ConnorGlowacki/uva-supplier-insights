@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "supplypy"
+version = "0.0.1"
+description = "A CLI tool for supply insights"
+readme = "README.md"
+requires-python = ">=3.7"
+license = { text = "MIT" }
+dynamic = ["dependencies"]
+
+[project.scripts]
+supplypy = "supplypy.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}  # tells setuptools packages live in src/
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
