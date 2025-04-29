@@ -1,6 +1,8 @@
 from tabpy.tabpy_tools.client import Client
 import pandas as pd
 import numpy as np
+import click
+from rapidfuzz import fuzz
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 
@@ -9,12 +11,21 @@ product_data = pd.read_csv("data/TRANSACTIONS.csv", low_memory=False)
 embeddings = np.load("outputs/product_desc_embeddings.npy")
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
+# HYPERPARAMS
+ALPHA = 0.9
+BETA = 0.1
+
 # Helper to get similarity scores
 def get_similar_items(query, top_n=5, exclude_supplier=None):
     query_embedding = model.encode([query])
+    click.echo("Calculating cosine similarity...")
     sims = cosine_similarity(query_embedding, embeddings).flatten()
     df = product_data.copy()
-    df["Similarity Score"] = sims
+    df["cosine_sim"] = sims
+    click.echo("Calculating Levenshtein distance...")
+    df['edit_ratio'] = df['Product Description'].apply(lambda x: fuzz.ratio(x, query))
+
+    df["Similarity Score"] = ALPHA * df["cosine_sim"] + BETA * (df["edit_ratio"] / 100.0)
 
     if exclude_supplier:
         df = df[df["Supplier Name"] != exclude_supplier]
@@ -62,9 +73,16 @@ def get_cluster_id_service(query):
     except Exception as e:
         return -1  # Default to -1 for error
 
-def deploy_services():
+def deploy_services(
+        host: str, 
+        username: str = None, 
+        password: str = None
+    ):
     # Connect and deploy
-    client = Client("http://localhost:9004/")
+    client = Client(host)
+    if username and password:
+        client.set_credentials(username, password)
+
     client.deploy('get_top_matches', get_top_matches_service, "Returns top 5 similar products", override=True)
     client.deploy('get_competitors', get_competitors_service, "Returns top 5 competitors", override=True)
     client.deploy('get_cluster_id', get_cluster_id_service, "Returns cluster ID for query", override=True)

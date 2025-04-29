@@ -12,6 +12,9 @@ def build():
     prepare_clustered_data()
 
 @main.command()
-def deploy():
+@click.option("--host", default="http://localhost:9004/", nargs=1, help="The URL for the TabPy server to deploy tools to")
+@click.option("--username", nargs=1, help="The username for TabPy server authentication")
+@click.option("--password", nargs=1, help="The password for TabPy server authentication")
+def deploy(host: str, username: str, password: str):
     click.echo("Deploying TabPy Services...")
-    deploy_services()
+    # deploy_services(host, username, password)

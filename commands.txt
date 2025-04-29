@@ -1,1 +1,2 @@
 Invoke-RestMethod -Uri http://localhost:9004/endpoints -Method Get | ConvertTo-Json
+Invoke-RestMethod -Uri "http://localhost:9004/query/get_top_matches" -Method Post -Body (@{ data = @{ query = "Glass beaker 500 ml" } } | ConvertTo-Json -Depth 10) -ContentType "application/json" | ConvertTo-Json
