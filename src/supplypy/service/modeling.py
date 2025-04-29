@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from rapidfuzz import fuzz
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 
@@ -35,3 +36,10 @@ def get_cluster_for_query(query):
     sims = cosine_similarity(query_embedding, embeddings).flatten()
     idx = sims.argmax()
     return int(product_data.iloc[idx]["Cluster"])
+
+def get_edit_distance_score(query: str, df: pd.DataFrame):
+    df['edit_ratio'] = df['Product Description'].apply(lambda x: fuzz.ratio(x, query))
+    df["edit_partial_ratio"] = df['Product Description'].apply(lambda x: fuzz.partial_ratio(x, query))
+    df["edit_tokensort_ratio"] = df['Product Description'].apply(lambda x: fuzz.token_sort_ratio(x, query))
+    df["edit_tokenset_ratio"] = df['Product Description'].apply(lambda x: fuzz.token_set_ratio(x, query))
+    return df
