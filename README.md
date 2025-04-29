@@ -50,6 +50,8 @@ Additionally, if you are connecting to a _TabPy_ server that uses authentication
 
 ### Building
 
+Place all transaction data in a `data/transactions` folder within this directory.
+
 ```bash
 supplypy build
 ```
@@ -122,7 +124,7 @@ data/
 outputs/
 ├── ...
 ```
-> Note that these directories do not exist when the repo is initially cloned. The only directory the user is expected to create is `data/transactions`, as this is well multiple transaction exports can be placed in order to provide the models data
+> Note that these directories do not exist when the repo is initially cloned. The only directory the user is expected to create is `data/transactions`, as this is where multiple transaction exports can be placed in order to provide the models data
 
 ## A note to developers
 
