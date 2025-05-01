@@ -73,6 +73,53 @@ def get_cluster_id_service(query):
     except Exception as e:
         return -1  # Default to -1 for error
 
+def get_pricing_stats_service(query):
+        try:
+            matches = get_similar_items(query, top_n=20, full=True)
+            prices = pd.to_numeric(matches["Unit Price"], errors="coerce").dropna()
+            if prices.empty:
+                return {}
+            return {
+                "min": float(prices.min()),
+                "25%": float(prices.quantile(0.25)),
+                "median": float(prices.median()),
+                "75%": float(prices.quantile(0.75)),
+                "max": float(prices.max()),
+                "mean": float(prices.mean())
+            }
+        except Exception as e:
+            return {"error": str(e)}
+ 
+def get_supplier_summary_service(query):
+    try:
+        df = get_similar_items(query, top_n=20, full=True)
+        if "Supplier Name" not in df.columns:
+            return []
+        summary = df.groupby("Supplier Name").agg(
+            Orders=('Product Description', 'count'),
+            Avg_Price=('Unit Price', 'mean')
+        ).reset_index()
+        return summary.to_dict(orient="records")
+    except Exception as e:
+        return [{"error": str(e)}]
+
+def get_buyer_summary_service(query):
+    try:
+        df = get_similar_items(query, top_n=20, full=True)
+        col = "Original Requisition Requestor"
+        if col not in df.columns and "Buyer: First Name" in df.columns and "Buyer: Last Name" in df.columns:
+            df["Buyer"] = df["Buyer: First Name"].astype(str) + " " + df["Buyer: Last Name"].astype(str)
+            col = "Buyer"
+        if col not in df.columns:
+            return []
+        summary = df.groupby(col).agg(
+            Orders=('Product Description', 'count'),
+            Avg_Price=('Unit Price', 'mean')
+        ).reset_index()
+        return summary.to_dict(orient="records")
+    except Exception as e:
+        return [{"error": str(e)}]
+
 def deploy_services(
         host: str, 
         username: str = None, 
@@ -86,3 +133,7 @@ def deploy_services(
     client.deploy('get_top_matches', get_top_matches_service, "Returns top 5 similar products", override=True)
     client.deploy('get_competitors', get_competitors_service, "Returns top 5 competitors", override=True)
     client.deploy('get_cluster_id', get_cluster_id_service, "Returns cluster ID for query", override=True)
+    client.deploy('get_pricing_stats', get_pricing_stats_service, "Returns price distribution", override=True)
+    client.deploy('get_supplier_summary', get_supplier_summary_service, "Returns aggregated supplier insights", override=True)
+    client.deploy('get_buyer_summary', get_buyer_summary_service, "Returns purchasing behavior info", override=True)
+ 
